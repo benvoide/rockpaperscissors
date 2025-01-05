@@ -1,0 +1,6 @@
+function love.conf(t)
+    t.window.width = 640
+    t.window.height = 480
+    t.window.title = "Mi Juego"
+    t.version = "11.4"
+end 
