@@ -4,9 +4,11 @@ function love.load()
     background      = love.graphics.newImage("assets/bg.png")
     CPUwinsImage    = love.graphics.newImage("assets/face.png")
     CPUlosesImage   = love.graphics.newImage("assets/sad_face.png")
-    rockImage       = love.graphics.newImage("assets/sad_face.png")
-    paperImage      = love.graphics.newImage("assets/sad_face.png")
+
+    rockImage       = love.graphics.newImage("assets/user_r.png")
+    paperImage      = love.graphics.newImage("assets/user_p.png")
     scissorsImage   = love.graphics.newImage("assets/user_s.png")
+
     tutorialImage   = love.graphics.newImage("assets/tutorial.png")
     hasShownTutorial = false;
     gameStatus  = 'waiting'
@@ -28,6 +30,10 @@ function love.load()
     rotationAngle = 0
     rotationSpeed = 2  -- Velocidad de la oscilación
     rotationAmplitude = 0.3  -- Amplitud de la oscilación (en radianes)
+
+    -- Agregar variable para rastrear la opción seleccionada
+    currentOption = 1  -- 1=rock, 2=paper, 3=scissors
+    optionImages = {rockImage, paperImage, scissorsImage}
 end
 
 -- Variable to store the pressed button
@@ -43,10 +49,22 @@ function love.update(dt)
         buttonPressed = "D-PAD: up"
     elseif love.keyboard.isDown('a') then
         buttonPressed = "D-PAD: left"
+        -- Rotar hacia la izquierda
+        if not wasKeyPressed then
+            currentOption = currentOption - 1
+            if currentOption < 1 then currentOption = 3 end
+            wasKeyPressed = true
+        end
     elseif love.keyboard.isDown('s') then
         buttonPressed = "D-PAD: down"
     elseif love.keyboard.isDown('d') then
         buttonPressed = "D-PAD: right"
+        -- Rotar hacia la derecha
+        if not wasKeyPressed then
+            currentOption = currentOption + 1
+            if currentOption > 3 then currentOption = 1 end
+            wasKeyPressed = true
+        end
     elseif love.keyboard.isDown('space') then
         buttonPressed = "Button: X"
     elseif love.keyboard.isDown('b') then
@@ -60,7 +78,8 @@ function love.update(dt)
     elseif love.keyboard.isDown('return') then
         buttonPressed = "START"
     else
-        buttonPressed = ""  -- Reset if nothing is pressed
+        wasKeyPressed = false  -- Reiniciamos cuando no hay tecla presionada
+        buttonPressed = ""
     end
 
     if buttonPressed ~= "" then
@@ -96,10 +115,11 @@ function love.draw()
     end
 
     love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
-    -- Dibujar las tijeras con rotación desde su centro
-    local imageWidth = scissorsImage:getWidth()
-    local imageHeight = scissorsImage:getHeight()
-    love.graphics.draw(scissorsImage, 
+    -- Dibujar la imagen actual con rotación desde su centro
+    local currentImage = optionImages[currentOption]
+    local imageWidth = currentImage:getWidth()
+    local imageHeight = currentImage:getHeight()
+    love.graphics.draw(currentImage, 
         imageWidth/2,    -- posición X del centro
         imageHeight/2,   -- posición Y del centro
         rotationAngle,   -- ángulo de rotación
