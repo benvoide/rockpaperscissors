@@ -48,6 +48,13 @@ function love.load()
     maxScaleTime = 0.3 -- duración de la animación en segundos
     maxScale = 1.3 -- escala máxima
     currentScale = 1
+
+    -- Cargar y configurar la música
+    bgMusic = love.audio.newSource("assets/music.ogg", "stream")
+    bgMusic:setLooping(true)
+    bgMusic:setVolume(0.01)  -- Ajustar volumen al 30%
+    isMuted = false
+    bgMusic:play()
 end
 
 -- Variable to store the pressed button
@@ -129,6 +136,19 @@ function love.update(dt)
         else
             currentScale = 1
         end
+    end
+
+    -- Manejar el muteo con Select (escape)
+    if love.keyboard.isDown('escape') and not wasEscapePressed then
+        isMuted = not isMuted
+        if isMuted then
+            bgMusic:setVolume(0)
+        else
+            bgMusic:setVolume(1)
+        end
+        wasEscapePressed = true
+    elseif not love.keyboard.isDown('escape') then
+        wasEscapePressed = false
     end
 end
 
