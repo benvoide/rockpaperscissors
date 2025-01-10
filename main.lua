@@ -9,9 +9,13 @@ function love.load()
     paperImage      = love.graphics.newImage("assets/user_p.png")
     scissorsImage   = love.graphics.newImage("assets/user_s.png")
 
+    CPUrockImage       = love.graphics.newImage("assets/cpu_r.png")
+    CPUpaperImage      = love.graphics.newImage("assets/cpu_p.png")
+    CPUscissorsImage   = love.graphics.newImage("assets/cpu_s.png")
+
     tutorialImage   = love.graphics.newImage("assets/tutorial.png")
     hasShownTutorial = false;
-    gameStatus  = 'waiting'
+    gameStatus  = 'selecting'
 
 
 
@@ -34,6 +38,16 @@ function love.load()
     -- Agregar variable para rastrear la opción seleccionada
     currentOption = 1  -- 1=rock, 2=paper, 3=scissors
     optionImages = {rockImage, paperImage, scissorsImage}
+
+    -- Agregar variables de estado
+    playerSelection = nil
+    cpuSelection = nil
+
+    -- Agregar variables para la animación de escalado
+    scaleTimer = 0
+    maxScaleTime = 0.3 -- duración de la animación en segundos
+    maxScale = 1.3 -- escala máxima
+    currentScale = 1
 end
 
 -- Variable to store the pressed button
@@ -95,14 +109,56 @@ function love.update(dt)
         end
     end
 
-    -- Actualizar el ángulo usando una función senoidal
-    rotationAngle = math.sin(love.timer.getTime() * rotationSpeed) * rotationAmplitude
+    if gameStatus == 'selecting' then
+        -- Actualizar rotación solo durante la selección
+        rotationAngle = math.sin(love.timer.getTime() * rotationSpeed) * rotationAmplitude
+        
+        if love.keyboard.isDown('z') then -- A button
+            playerSelection = currentOption
+            cpuSelection = love.math.random(1, 3)
+            gameStatus = 'result'
+            scaleTimer = 0
+            rotationAngle = 0 -- Resetear la rotación cuando se confirma
+        end
+    elseif gameStatus == 'result' then
+        -- Actualizar la animación de escalado
+        if scaleTimer < maxScaleTime then
+            scaleTimer = scaleTimer + dt
+            local progress = scaleTimer / maxScaleTime
+            currentScale = 1 + (maxScale - 1) * math.sin(progress * math.pi)
+        else
+            currentScale = 1
+        end
+    end
 end
 
 function love.draw()
-    love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
-    -- Draw the background
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(background, 0, 0)
+
+    if gameStatus == 'selecting' then
+        -- Draw current player selection with rotation
+        local currentImage = optionImages[currentOption]
+        local imageWidth = currentImage:getWidth()
+        local imageHeight = currentImage:getHeight()
+        love.graphics.draw(currentImage, 
+            imageWidth/2,
+            imageHeight/2,
+            rotationAngle,
+            1, 1,
+            imageWidth/2,
+            imageHeight/2)
+    elseif gameStatus == 'result' then
+        -- Draw CPU selection
+        local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
+        love.graphics.draw(cpuImages[cpuSelection], 0, 0)
+        
+        -- Draw player selection (usando las imágenes user_X.png)
+        local playerImages = {rockImage, paperImage, scissorsImage}
+        love.graphics.draw(playerImages[playerSelection], 0, 0)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
     -- Draw the upper image with vibration
     --love.graphics.draw(CPUwinsImage, posX + offsetX, posY + offsetY)
     --love.graphics.setColor(0, 0, 0, 1)  -- RGB for black (uncomment for text)
@@ -113,19 +169,6 @@ function love.draw()
         local waveOffset = math.sin(timer) * waveAmplitude  -- Amplitud reducida
         love.graphics.draw(tutorialImage, 0, waveOffset)
     end
-
-    love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
-    -- Dibujar la imagen actual con rotación desde su centro
-    local currentImage = optionImages[currentOption]
-    local imageWidth = currentImage:getWidth()
-    local imageHeight = currentImage:getHeight()
-    love.graphics.draw(currentImage, 
-        imageWidth/2,    -- posición X del centro
-        imageHeight/2,   -- posición Y del centro
-        rotationAngle,   -- ángulo de rotación
-        1, 1,           -- escala en X e Y
-        imageWidth/2,    -- punto de origen X
-        imageHeight/2)   -- punto de origen Y
 end
 
 -- Key mapping for r36s - ArkOS 2.0 (08232024-1 AeUX)
