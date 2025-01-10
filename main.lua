@@ -6,8 +6,9 @@ function love.load()
     CPUlosesImage   = love.graphics.newImage("assets/sad_face.png")
     rockImage       = love.graphics.newImage("assets/sad_face.png")
     paperImage      = love.graphics.newImage("assets/sad_face.png")
-    scissorsImage   = love.graphics.newImage("assets/sad_face.png")
-
+    scissorsImage   = love.graphics.newImage("assets/user_s.png")
+    tutorialImage   = love.graphics.newImage("assets/tutorial.png")
+    hasShownTutorial = false;
     gameStatus  = 'waiting'
 
 
@@ -18,6 +19,15 @@ function love.load()
 
     -- Vibration intensity
     vibration = 2
+
+    alphaFadeOut = 1  -- Inicializar alphaFadeOut
+    tutorialStarted = false  -- Nueva variable para rastrear si el tutorial comenzó
+    timer = 0  -- Agregar timer para la animación
+    waveSpeed = 1.2  -- Nueva variable para controlar la velocidad de la onda
+    waveAmplitude = 1.5  -- Nueva variable para controlar la amplitud
+    rotationAngle = 0
+    rotationSpeed = 2  -- Velocidad de la oscilación
+    rotationAmplitude = 0.3  -- Amplitud de la oscilación (en radianes)
 end
 
 -- Variable to store the pressed button
@@ -52,6 +62,22 @@ function love.update(dt)
     else
         buttonPressed = ""  -- Reset if nothing is pressed
     end
+
+    if buttonPressed ~= "" then
+        tutorialStarted = true
+    end
+
+    timer = timer + dt * waveSpeed  -- Velocidad reducida
+    
+    if tutorialStarted then
+        alphaFadeOut = alphaFadeOut - 1 * dt
+        if alphaFadeOut < 0 then
+            alphaFadeOut = 0
+        end
+    end
+
+    -- Actualizar el ángulo usando una función senoidal
+    rotationAngle = math.sin(love.timer.getTime() * rotationSpeed) * rotationAmplitude
 end
 
 function love.draw()
@@ -59,9 +85,27 @@ function love.draw()
     -- Draw the background
     love.graphics.draw(background, 0, 0)
     -- Draw the upper image with vibration
-    love.graphics.draw(CPUwinsImage, posX + offsetX, posY + offsetY)
-    love.graphics.setColor(0, 0, 0, 1)  -- RGB for black (uncomment for text)
+    --love.graphics.draw(CPUwinsImage, posX + offsetX, posY + offsetY)
+    --love.graphics.setColor(0, 0, 0, 1)  -- RGB for black (uncomment for text)
     love.graphics.print("Button pressed: " .. buttonPressed, 10, 10)  -- Show the pressed button
+
+    if hasShownTutorial == false then
+        love.graphics.setColor(1, 1, 1, alphaFadeOut)
+        local waveOffset = math.sin(timer) * waveAmplitude  -- Amplitud reducida
+        love.graphics.draw(tutorialImage, 0, waveOffset)
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
+    -- Dibujar las tijeras con rotación desde su centro
+    local imageWidth = scissorsImage:getWidth()
+    local imageHeight = scissorsImage:getHeight()
+    love.graphics.draw(scissorsImage, 
+        imageWidth/2,    -- posición X del centro
+        imageHeight/2,   -- posición Y del centro
+        rotationAngle,   -- ángulo de rotación
+        1, 1,           -- escala en X e Y
+        imageWidth/2,    -- punto de origen X
+        imageHeight/2)   -- punto de origen Y
 end
 
 -- Key mapping for r36s - ArkOS 2.0 (08232024-1 AeUX)
