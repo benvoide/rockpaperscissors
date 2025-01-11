@@ -133,14 +133,44 @@ function love.update(dt)
             rotationAngle = 0 -- Resetear la rotación cuando se confirma
         end
     elseif gameStatus == 'result' then
-        -- Actualizar el timer de escala solo si la animación no ha terminado
-        if not isScalingDone then
-            cpuScaleTimer = cpuScaleTimer + dt * cpuScaleSpeed
-            if cpuScaleTimer >= math.pi then  -- Un ciclo completo
-                isScalingDone = true
-                cpuScaleTimer = math.pi
-            end
+        -- Actualizar el timer de la animación
+        cpuScaleTimer = cpuScaleTimer + dt
+        
+        -- Calcular la escala con un solo pulso que dura 2 segundos
+        local scaleAnimationDuration = 2 -- duración en segundos
+        local cpuScale = 1
+        
+        if cpuScaleTimer < scaleAnimationDuration then
+            cpuScale = 1 + math.sin(cpuScaleTimer * 5) * 0.3  -- Multiplicamos por 5 para hacer la oscilación más rápida
         end
+        
+        -- Draw CPU selection
+        local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
+        local cpuImage = cpuImages[cpuSelection]
+        local imageWidth = cpuImage:getWidth()
+        local imageHeight = cpuImage:getHeight()
+        
+        love.graphics.draw(cpuImage, 
+            imageWidth/2,
+            imageHeight/2,
+            0,
+            cpuScale, cpuScale,
+            imageWidth/2,
+            imageHeight/2)
+        
+        -- Draw player selection con el mismo efecto de escala
+        local playerImages = {rockImage, paperImage, scissorsImage}
+        local playerImage = playerImages[playerSelection]
+        local playerWidth = playerImage:getWidth()
+        local playerHeight = playerImage:getHeight()
+        
+        love.graphics.draw(playerImage, 
+            playerWidth/2,
+            playerHeight/2,
+            0,
+            cpuScale, cpuScale,
+            playerWidth/2,
+            playerHeight/2)
     end
 
     -- Manejar el muteo con Select (escape)
@@ -174,26 +204,41 @@ function love.draw()
             imageWidth/2,
             imageHeight/2)
     elseif gameStatus == 'result' then
-        -- Calcular la escala con un solo pulso
-        local cpuScale = 1 + math.sin(cpuScaleTimer) * 0.3  -- Oscila entre 0.7 y 1.3
+        -- Calcular la escala con un solo pulso que dura 2 segundos
+        local scaleAnimationDuration = 2 -- duración en segundos
+        local cpuScale = 1
         
-        -- Draw CPU selection con punto de anclaje en el centro
+        if cpuScaleTimer < scaleAnimationDuration then
+            cpuScale = 1 + math.sin(cpuScaleTimer * 5) * 0.3  -- Multiplicamos por 5 para hacer la oscilación más rápida
+        end
+        
+        -- Draw CPU selection
         local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
         local cpuImage = cpuImages[cpuSelection]
         local imageWidth = cpuImage:getWidth()
         local imageHeight = cpuImage:getHeight()
         
         love.graphics.draw(cpuImage, 
-            imageWidth/2,    -- posición x centrada
-            imageHeight/2,   -- posición y centrada
-            0,              -- rotación
-            cpuScale, cpuScale,  -- escala x, y
-            imageWidth/2,   -- punto de anclaje x en el centro
-            imageHeight/2)  -- punto de anclaje y en el centro
+            imageWidth/2,
+            imageHeight/2,
+            0,
+            cpuScale, cpuScale,
+            imageWidth/2,
+            imageHeight/2)
         
-        -- Draw player selection (sin cambios)
+        -- Draw player selection con el mismo efecto de escala
         local playerImages = {rockImage, paperImage, scissorsImage}
-        love.graphics.draw(playerImages[playerSelection], 0, 0)
+        local playerImage = playerImages[playerSelection]
+        local playerWidth = playerImage:getWidth()
+        local playerHeight = playerImage:getHeight()
+        
+        love.graphics.draw(playerImage, 
+            playerWidth/2,
+            playerHeight/2,
+            0,
+            cpuScale, cpuScale,
+            playerWidth/2,
+            playerHeight/2)
     end
 
     love.graphics.setColor(1, 1, 1, 1)  -- RGB for white (uncomment for background)
