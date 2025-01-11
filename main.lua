@@ -60,6 +60,15 @@ function love.load()
     cpuScaleTimer = 0
     cpuScaleSpeed = 5  -- Aumentado para una animación más rápida
     isScalingDone = false  -- Nueva variable para controlar si la animación terminó
+
+    -- Agregar variables para el score
+    playerScore = 0
+    cpuScore = 0
+    lastResult = ""  -- Para mostrar el resultado de la última jugada
+
+    -- Agregar variable para el temporizador de resultado
+    resultTimer = 0
+    resultDisplayTime = 2 -- segundos que se muestra el resultado
 end
 
 -- Variable to store the pressed button
@@ -128,49 +137,39 @@ function love.update(dt)
         if love.keyboard.isDown('z') then -- A button
             playerSelection = currentOption
             cpuSelection = love.math.random(1, 3)
+            
+            -- Determinar el ganador
+            if playerSelection == cpuSelection then
+                lastResult = "¡Empate!"
+            elseif (playerSelection == 1 and cpuSelection == 3) or  -- Piedra vence Tijera
+                   (playerSelection == 2 and cpuSelection == 1) or  -- Papel vence Piedra
+                   (playerSelection == 3 and cpuSelection == 2) then -- Tijera vence Papel
+                playerScore = playerScore + 1
+                lastResult = "¡Ganaste!"
+            else
+                cpuScore = cpuScore + 1
+                lastResult = "¡Perdiste!"
+            end
+            
             gameStatus = 'result'
             scaleTimer = 0
-            rotationAngle = 0 -- Resetear la rotación cuando se confirma
+            rotationAngle = 0
         end
     elseif gameStatus == 'result' then
+        -- Actualizar el temporizador
+        resultTimer = resultTimer + dt
+        
         -- Actualizar el timer de la animación
         cpuScaleTimer = cpuScaleTimer + dt
         
-        -- Calcular la escala con un solo pulso que dura 2 segundos
-        local scaleAnimationDuration = 2 -- duración en segundos
-        local cpuScale = 1
-        
-        if cpuScaleTimer < scaleAnimationDuration then
-            cpuScale = 1 + math.sin(cpuScaleTimer * 5) * 0.3  -- Multiplicamos por 5 para hacer la oscilación más rápida
+        -- Después del tiempo establecido, volver a la selección
+        if resultTimer >= resultDisplayTime then
+            gameStatus = 'selecting'
+            resultTimer = 0
+            playerSelection = nil
+            cpuSelection = nil
+            cpuScaleTimer = 0  -- Reiniciar también el timer de escala
         end
-        
-        -- Draw CPU selection
-        local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
-        local cpuImage = cpuImages[cpuSelection]
-        local imageWidth = cpuImage:getWidth()
-        local imageHeight = cpuImage:getHeight()
-        
-        love.graphics.draw(cpuImage, 
-            imageWidth/2,
-            imageHeight/2,
-            0,
-            cpuScale, cpuScale,
-            imageWidth/2,
-            imageHeight/2)
-        
-        -- Draw player selection con el mismo efecto de escala
-        local playerImages = {rockImage, paperImage, scissorsImage}
-        local playerImage = playerImages[playerSelection]
-        local playerWidth = playerImage:getWidth()
-        local playerHeight = playerImage:getHeight()
-        
-        love.graphics.draw(playerImage, 
-            playerWidth/2,
-            playerHeight/2,
-            0,
-            cpuScale, cpuScale,
-            playerWidth/2,
-            playerHeight/2)
     end
 
     -- Manejar el muteo con Select (escape)
@@ -203,13 +202,13 @@ function love.draw()
             1, 1,
             imageWidth/2,
             imageHeight/2)
-    elseif gameStatus == 'result' then
+    elseif gameStatus == 'result' and playerSelection and cpuSelection then
         -- Calcular la escala con un solo pulso que dura 2 segundos
         local scaleAnimationDuration = 2 -- duración en segundos
         local cpuScale = 1
         
         if cpuScaleTimer < scaleAnimationDuration then
-            cpuScale = 1 + math.sin(cpuScaleTimer * 5) * 0.3  -- Multiplicamos por 5 para hacer la oscilación más rápida
+            cpuScale = 1 + math.sin(cpuScaleTimer * 5) * 0.3
         end
         
         -- Draw CPU selection
@@ -226,7 +225,7 @@ function love.draw()
             imageWidth/2,
             imageHeight/2)
         
-        -- Draw player selection con el mismo efecto de escala
+        -- Draw player selection
         local playerImages = {rockImage, paperImage, scissorsImage}
         local playerImage = playerImages[playerSelection]
         local playerWidth = playerImage:getWidth()
@@ -251,6 +250,20 @@ function love.draw()
         love.graphics.setColor(1, 1, 1, alphaFadeOut)
         local waveOffset = math.sin(timer) * waveAmplitude  -- Amplitud reducida
         love.graphics.draw(tutorialImage, 0, waveOffset)
+    end
+
+    -- Dibujar el score y el resultado
+    love.graphics.setColor(0, 0, 0, 1)  -- Color negro para el texto
+    love.graphics.print("Jugador: " .. playerScore, 10, 30)
+    love.graphics.print("CPU: " .. cpuScore, 10, 50)
+    
+    if gameStatus == 'result' then
+        -- Centrar el texto del resultado
+        local font = love.graphics.getFont()
+        local textWidth = font:getWidth(lastResult)
+        love.graphics.print(lastResult, 
+            (love.graphics.getWidth() - textWidth) / 2, 
+            love.graphics.getHeight() - 50)
     end
 end
 
