@@ -52,9 +52,14 @@ function love.load()
     -- Cargar y configurar la música
     bgMusic = love.audio.newSource("assets/music.ogg", "stream")
     bgMusic:setLooping(true)
-    bgMusic:setVolume(0.01)  -- Ajustar volumen al 30%
+    bgMusic:setVolume(0.3)  -- Ajustar volumen al 30%
     isMuted = false
     bgMusic:play()
+
+    -- Agregar variables para la animación de escala del CPU
+    cpuScaleTimer = 0
+    cpuScaleSpeed = 5  -- Aumentado para una animación más rápida
+    isScalingDone = false  -- Nueva variable para controlar si la animación terminó
 end
 
 -- Variable to store the pressed button
@@ -128,13 +133,13 @@ function love.update(dt)
             rotationAngle = 0 -- Resetear la rotación cuando se confirma
         end
     elseif gameStatus == 'result' then
-        -- Actualizar la animación de escalado
-        if scaleTimer < maxScaleTime then
-            scaleTimer = scaleTimer + dt
-            local progress = scaleTimer / maxScaleTime
-            currentScale = 1 + (maxScale - 1) * math.sin(progress * math.pi)
-        else
-            currentScale = 1
+        -- Actualizar el timer de escala solo si la animación no ha terminado
+        if not isScalingDone then
+            cpuScaleTimer = cpuScaleTimer + dt * cpuScaleSpeed
+            if cpuScaleTimer >= math.pi then  -- Un ciclo completo
+                isScalingDone = true
+                cpuScaleTimer = math.pi
+            end
         end
     end
 
@@ -169,11 +174,24 @@ function love.draw()
             imageWidth/2,
             imageHeight/2)
     elseif gameStatus == 'result' then
-        -- Draw CPU selection
-        local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
-        love.graphics.draw(cpuImages[cpuSelection], 0, 0)
+        -- Calcular la escala con un solo pulso
+        local cpuScale = 1 + math.sin(cpuScaleTimer) * 0.3  -- Oscila entre 0.7 y 1.3
         
-        -- Draw player selection (usando las imágenes user_X.png)
+        -- Draw CPU selection con punto de anclaje en el centro
+        local cpuImages = {CPUrockImage, CPUpaperImage, CPUscissorsImage}
+        local cpuImage = cpuImages[cpuSelection]
+        local imageWidth = cpuImage:getWidth()
+        local imageHeight = cpuImage:getHeight()
+        
+        love.graphics.draw(cpuImage, 
+            imageWidth/2,    -- posición x centrada
+            imageHeight/2,   -- posición y centrada
+            0,              -- rotación
+            cpuScale, cpuScale,  -- escala x, y
+            imageWidth/2,   -- punto de anclaje x en el centro
+            imageHeight/2)  -- punto de anclaje y en el centro
+        
+        -- Draw player selection (sin cambios)
         local playerImages = {rockImage, paperImage, scissorsImage}
         love.graphics.draw(playerImages[playerSelection], 0, 0)
     end
